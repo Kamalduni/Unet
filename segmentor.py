@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Dec  4 20:09:20 2017
-
 @author: JamilG-Lenovo
 """
 
@@ -101,11 +100,19 @@ def main():
     print("type of train_images" + str(type(train_images[0])))
     print("type of train_label" + str(type(train_label[0])))
     print('\n')
-    print("shape of train_images" + str(train_images[0].shape))
-    print("shape of train_label" + str(train_label[0].shape))
+    print("shape of train_images" + str(train_images.shape))
+    print("shape of train_label" + str(train_label.shape))
+    print('\n')
+    print("shape of train_images[0]" + str(train_images[0].shape))
+    print("shape of train_label[0]" + str(train_label[0].shape))
     
-    # plt.imshow(train_label[0], interpolation='nearest')
-    # plt.show()
+    plt.imshow(train_images[0], interpolation='nearest')
+    plt.title("training data input")
+    plt.show()
+    
+    plt.imshow(train_label[0], interpolation='nearest')
+    plt.title("training data output")
+    plt.show()
     
     # create a UNet
     unet = get_unet(train_label[0].shape[0],
@@ -117,6 +124,7 @@ def main():
 
     # fit the unet with the actual image, train_images
     # and the output, train_label
+    # error with the input need to fix the fitting
     
     unet.fit(train_images, train_label, batch_size=16, nb_epoch=10)
 
