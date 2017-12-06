@@ -16,10 +16,10 @@ from keras.optimizers import Adam
 import cv2
 import numpy as np
 # training data 
-image_location = "C:/Users/JamilG-Lenovo/Desktop/train/"
-image = image_location+"image"
-label = image_location +"label"
-
+image_location = "C:/Users/JamilG-Lenovo/Desktop/"
+image = image_location+"train/image"
+label = image_location +"train/label"
+test = image_location +"test"
 
 class train_data():
     
@@ -40,11 +40,26 @@ class train_data():
     
     def get_label(self):
         return np.array(self.label)
-        
+    
+    
+class test_data():
+    
+    def __init__(self, test):
+        self.test_Images = []
+        for file in os.listdir(test):
+            if file.endswith(".tif"):
+                self.test_Images.append(cv2.imread(image+"/"+file,0))
+
+    def get_data(self):
+        return np.array(self.test_Images)
+
+    
+    
 
 
 def get_unet(rows, cols):
     inputs = Input((rows, cols, 1))
+    print("Input  : " + str(inputs))
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(inputs)
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv1)
     pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
@@ -81,7 +96,7 @@ def get_unet(rows, cols):
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv9)
 
     conv10 = Conv2D(1, (1, 1), activation='sigmoid')(conv9)
-
+    print("Output : " + str(conv10))
     model = Model(inputs=[inputs], outputs=[conv10])
 
     model.compile(optimizer=Adam(lr=1e-5), loss = losses.mean_squared_error)
@@ -93,10 +108,36 @@ def get_unet(rows, cols):
 def main():
     # load all the training images
     train_set = train_data(image, label)
+    test_set = test_data(test)
+    test_info = test_set.get_data()
     # get the training image
     train_images = train_set.get_image()
     # get the segmented image
     train_label = train_set.get_label()
+#    print("type of train_images" + str(type(train_images[0])))
+#    print("type of train_label" + str(type(train_label[0])))
+#    print('\n')
+#    print("shape of train_images" + str(train_images.shape))
+#    print("shape of train_label" + str(train_label.shape))
+#    print('\n')
+#    print("shape of train_images[0]" + str(train_images[0].shape))
+#    print("shape of train_label[0]" + str(train_label[0].shape))
+#    
+#    plt.imshow(train_images[0], interpolation='nearest', cmap='gray')
+#    plt.title("training data input")
+#    plt.show()
+#    
+#    plt.imshow(train_label[0], interpolation='nearest', cmap='gray')
+#    plt.title("training data output")
+#    plt.show()
+    
+    # create a UNet
+    unet = get_unet(train_label[0].shape[0],
+                    train_label[0].shape[1])
+    
+    train_images = train_images.reshape(30,512,512,1)
+    train_label = train_label.reshape(30,512,512,1)
+    print("reshape:-------------------------\n\n")
     print("type of train_images" + str(type(train_images[0])))
     print("type of train_label" + str(type(train_label[0])))
     print('\n')
@@ -106,26 +147,43 @@ def main():
     print("shape of train_images[0]" + str(train_images[0].shape))
     print("shape of train_label[0]" + str(train_label[0].shape))
     
-    plt.imshow(train_images[0], interpolation='nearest')
+    plt.imshow(train_images[0].reshape(512,512), interpolation='nearest', cmap='gray')
     plt.title("training data input")
     plt.show()
     
-    plt.imshow(train_label[0], interpolation='nearest')
+    plt.imshow(train_label[0].reshape(512,512), interpolation='nearest', cmap='gray')
     plt.title("training data output")
     plt.show()
-    
-    # create a UNet
-    unet = get_unet(train_label[0].shape[0],
-                    train_label[0].shape[1])
-    
     # look at the summary of the unet
-    unet.summary()
+    #unet.summary()
     #-----------errors start here-----------------
 
     # fit the unet with the actual image, train_images
     # and the output, train_label
     # error with the input need to fix the fitting
+    unet.load_weights('Unet.h5')
+    #for i in range(10):
+     #   unet.fit(train_images, train_label, validation_data=
+      #     (train_images, train_label), epochs=1, batch_size=3)
+      #  unet.save('Unet.h5')
+    print("out")
+   
+    print(test_info.shape)
+    plt.imshow(test_info[0], interpolation='nearest', cmap='gray')
+    plt.title("test data input")
+    plt.show()
     
-    unet.fit(train_images, train_label, batch_size=16, nb_epoch=10)
-
+    test_info = test_info.reshape(30,512,512,1)
+    print('in')
+    prediction = unet.predict(test_info)
+    print("prediction shape: " + prediction.shape)
+    print(str(type(prediction)))
+    print("prediction[0] shape: " + prediction[0].shape)
+    print("reshape")
+    imagep = prediction[0].reshape(512,512)
+    plt.title("test data output")
+    plt.imshow(imagep ,interpolation='nearest')
+    print('done')
+          
+          
 main()
